@@ -296,3 +296,26 @@ h1 {
   font-size: 1rem;
   box-sizing: border-box;
 }
+
+/* index.css dosyasının en altına ekle */
+
+.page-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem; /* Butonlar arasına boşluk */
+}
+
+.export-button {
+  background-color: #1D6F42; /* Excel Yeşili */
+  color: white;
+}
+
+.export-button:hover {
+  background-color: #175935;
+}
+
+.export-button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}

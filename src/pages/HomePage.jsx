@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'; // useCallback'i kaldırdık
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -14,43 +16,42 @@ export default function HomePage() {
   const [itemsPerPage] = useState(20);
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
 
-  // YENİ: Tek ve birleştirilmiş useEffect
-  useEffect(() => {
-    // Bu fonksiyon her sayfa veya arama terimi değiştiğinde çalışacak
-    async function getProducts() {
-      try {
-        const from = (currentPage - 1) * itemsPerPage;
-        const to = from + itemsPerPage - 1;
+  const getProducts = useCallback(async () => {
+    try {
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
 
-        let query = supabase.from('urunler').select('*', { count: 'exact' });
+      let query = supabase.from('urunler').select('*', { count: 'exact' });
 
-        if (searchTerm) {
-          query = query.ilike('urun_adi', `%${searchTerm}%`);
-        }
-
-        query = query.order('created_at', { ascending: false }).range(from, to);
-        const { data, error, count } = await query;
-
-        if (error) throw error;
-        
-        if (data != null) setProducts(data);
-        if (count != null) {
-          setTotalProducts(count);
-          setTotalPages(Math.ceil(count / itemsPerPage));
-        }
-      } catch (error) {
-        alert(error.message);
+      if (searchTerm) {
+        query = query.ilike('urun_adi', `%${searchTerm}%`);
       }
-    }
-    
-    getProducts(); // Fonksiyonu çalıştır
-    
-  }, [currentPage, searchTerm, itemsPerPage]); // Artık sadece bu iki state'e bağlı
 
+      query = query.order('id', { ascending: true }).range(from, to);
+      
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+      
+      if (data != null) setProducts(data);
+      if (count != null) {
+        setTotalProducts(count);
+        setTotalPages(Math.ceil(count / itemsPerPage));
+      }
+    } catch (error) {
+      alert(error.message);
+    }
+  }, [currentPage, searchTerm, itemsPerPage]);
+
+  useEffect(() => {
+    getProducts();
+  }, [getProducts]);
+  
   const handleSearchChange = (e) => {
+    setCurrentPage(1);
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // Arama yapıldığında her zaman 1. sayfaya dön
   };
   
   async function deleteProduct(id) {
@@ -58,23 +59,83 @@ export default function HomePage() {
     try {
       const { error } = await supabase.from('urunler').delete().eq('id', id);
       if (error) throw error;
-      // getProducts() fonksiyonunu doğrudan çağırmak yerine,
-      // currentPage state'ini değiştirerek useEffect'in yeniden tetiklenmesini bekleyebiliriz.
-      // Ama şimdilik direkt çağırmak daha basit ve anlaşılır.
-      // Eğer arama aktifse ve son elemanı silersek boş sayfa göstermemesi için sayfa numarasını kontrol etmemiz gerekebilir.
-      // Şimdilik basit tutalım.
-      setCurrentPage(1); // Silme sonrası 1. sayfaya dönmek en güvenli davranış
-      setSearchTerm(''); // ve aramayı temizle
+      setCurrentPage(1);
     } catch (error) {
       alert(error.message);
     }
   }
+
+// HomePage.jsx içinde SADECE handleExportExcel fonksiyonunu değiştiriyoruz
+
+  // HomePage.jsx içinde SADECE handleExportExcel fonksiyonunu değiştiriyoruz
+
+// HomePage.jsx içinde SADECE handleExportExcel fonksiyonunu değiştiriyoruz
+
+  const handleExportExcel = async () => {
+    setIsExporting(true);
+    try {
+      const { data: allProducts, error } = await supabase
+        .from('urunler')
+        .select('urun_adi, cinsi, stok_miktari, gelis_fiyati, satis_fiyati, aciklama')
+        .order('id', { ascending: true });
+
+      if (error) throw error;
+
+      // 1. Yeni bir Excel çalışma kitabı oluştur
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Stok Listesi');
+
+      // 2. Sütun başlıklarını ve genişliklerini tanımla
+      worksheet.columns = [
+        { header: 'Ürün Adı', key: 'urun_adi', width: 40 },
+        { header: 'Cinsi', key: 'cinsi', width: 25 },
+        { header: 'Stok Adedi', key: 'stok_miktari', width: 15 },
+        { header: 'Geliş Fiyatı', key: 'gelis_fiyati', width: 15, style: { numFmt: '#,##0.00 TL' } },
+        { header: 'Satış Fiyatı', key: 'satis_fiyati', width: 15, style: { numFmt: '#,##0.00 TL' } },
+        { header: 'Açıklama', key: 'aciklama', width: 50 }
+      ];
+
+      // 3. Başlık satırını stilize et
+      const headerRow = worksheet.getRow(1);
+      headerRow.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF4CAF50' }, // Yeşil arka plan
+        };
+        cell.font = {
+          color: { argb: 'FFFFFFFF' }, // Beyaz yazı
+          bold: true,
+        };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      });
+
+      // 4. Veriyi satır satır ekle
+      allProducts.forEach(product => {
+        worksheet.addRow(product);
+      });
+
+      // 5. Dosyayı oluştur (buffer'a yaz)
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      // 6. Dosyayı indir
+      saveAs(new Blob([buffer]), 'Stok Raporu.xlsx');
+
+    } catch (error) {
+      alert("Veri aktarılırken bir hata oluştu: " + error.message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="App-header">
       <h1>StokCep</h1>
       <div className="page-actions">
         <Link to="/ekle" className="button-link">Yeni Ürün Ekle</Link>
+        <button onClick={handleExportExcel} disabled={isExporting} className="export-button">
+          {isExporting ? 'Aktarılıyor...' : "Excel'e Aktar"}
+        </button>
       </div>
       
       <div className="search-container">
