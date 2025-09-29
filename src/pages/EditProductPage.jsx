@@ -14,7 +14,7 @@ export default function EditProductPage() {
   });
   const navigate = useNavigate();
   const { productId } = useParams();
-
+ const handleFocus = (event) => event.target.select(); // YENİ FONKSİYON
   useEffect(() => {
     async function fetchProduct() {
       const { data, error } = await supabase
@@ -88,17 +88,17 @@ export default function EditProductPage() {
   </div>
 
   <div className="form-field">
-    <input type="number" name="stok_miktari" id="stok_miktari" placeholder=" " value={product.stok_miktari || 0} onChange={handleInputChange} required />
+    <input type="number" name="stok_miktari" id="stok_miktari" placeholder=" " value={product.stok_miktari || 0} onChange={handleInputChange} onFocus={handleFocus} required />
     <label htmlFor="stok_miktari">Stok Miktarı</label>
   </div>
 
   <div className="form-field">
-    <input type="number" step="0.01" name="gelis_fiyati" id="gelis_fiyati" placeholder=" " value={product.gelis_fiyati || 0} onChange={handleInputChange} />
+    <input type="number" step="0.01" name="gelis_fiyati" id="gelis_fiyati" placeholder=" " value={product.gelis_fiyati || 0} onChange={handleInputChange} onFocus={handleFocus} />
     <label htmlFor="gelis_fiyati">Geliş Fiyatı</label>
   </div>
 
   <div className="form-field">
-    <input type="number" step="0.01" name="satis_fiyati" id="satis_fiyati" placeholder=" " value={product.satis_fiyati || 0} onChange={handleInputChange} />
+    <input type="number" step="0.01" name="satis_fiyati" id="satis_fiyati" placeholder=" " value={product.satis_fiyati || 0} onChange={handleInputChange} onFocus={handleFocus} />
     <label htmlFor="satis_fiyati">Satış Fiyatı</label>
   </div>
 

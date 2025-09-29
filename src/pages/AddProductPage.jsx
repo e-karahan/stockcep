@@ -6,7 +6,8 @@ export default function AddProductPage() {
   // State'i yeni alanları içerecek şekilde güncelledik
   const [newProduct, setNewProduct] = useState({ urun_adi: '', cinsi: '', stok_miktari: '', gelis_fiyati: '', satis_fiyati: '', aciklama: '' });
   const navigate = useNavigate();
-
+   const handleFocus = (event) => event.target.select(); // YENİ FONKSİYON
+    
   function handleInputChange(event) {
     const { name, value } = event.target;
     setNewProduct(prev => ({ ...prev, [name]: value }));
@@ -22,7 +23,7 @@ export default function AddProductPage() {
       alert(error.message);
     }
   }
-
+  
   return (
     <div className="App-header">
         <Link to="/" className='button-link'>← Ana Sayfaya Dön</Link>
@@ -41,17 +42,17 @@ export default function AddProductPage() {
   </div>
 
   <div className="form-field">
-    <input type="number" name="stok_miktari" id="stok_miktari" placeholder=" " value={newProduct.stok_miktari} onChange={handleInputChange} required />
+    <input type="number" name="stok_miktari" id="stok_miktari" placeholder=" " value={newProduct.stok_miktari} onChange={handleInputChange} onFocus={handleFocus} required />
     <label htmlFor="stok_miktari">Stok Miktarı</label>
   </div>
 
   <div className="form-field">
-    <input type="number" step="0.01" name="gelis_fiyati" id="gelis_fiyati" placeholder=" " value={newProduct.gelis_fiyati} onChange={handleInputChange} />
+    <input type="number" step="0.01" name="gelis_fiyati" id="gelis_fiyati" placeholder=" " value={newProduct.gelis_fiyati} onChange={handleInputChange} onFocus={handleFocus} />
     <label htmlFor="gelis_fiyati">Geliş Fiyatı</label>
   </div>
 
   <div className="form-field">
-    <input type="number" step="0.01" name="satis_fiyati" id="satis_fiyati" placeholder=" " value={newProduct.satis_fiyati} onChange={handleInputChange} />
+    <input type="number" step="0.01" name="satis_fiyati" id="satis_fiyati" placeholder=" " value={newProduct.satis_fiyati} onChange={handleInputChange} onFocus={handleFocus} />
     <label htmlFor="satis_fiyati">Satış Fiyatı</label>
   </div>
 
