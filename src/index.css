@@ -173,12 +173,19 @@ td button:first-of-type:hover {
     border-radius: 8px;
   }
 
+/* ... @media bloğunun içinde ... */
   td {
     border: none;
 		border-bottom: 1px solid #3c414d; 
 		position: relative;
 		padding-left: 50%; 
     text-align: right;
+    
+    /* YENİ EKLENENLER */
+    min-height: 2.5rem; /* Hücreye minimum bir yükseklik veriyoruz */
+    display: flex; /* Dikeyde ortalamak için flexbox kullanıyoruz */
+    align-items: center; /* İçeriği dikeyde ortalıyoruz */
+    justify-content: flex-end; /* İçeriği sağa yaslıyoruz (text-align: right gibi) */
   }
 
   td:before {
@@ -267,4 +274,25 @@ hemen yanındaki label'ı hareket ettir.
 
 h1 {
   margin-bottom: 0;
+}
+
+/* index.css dosyasının en altına ekle */
+
+.search-container {
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-background);
+  color: var(--text-color);
+  font-size: 1rem;
+  box-sizing: border-box;
 }

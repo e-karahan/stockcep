@@ -27,7 +27,6 @@ export default function AddProductPage() {
   return (
     <div className="App-header">
         <Link to="/" className='button-link'>← Ana Sayfaya Dön</Link>
-        <h1>Yeni Ürün Ekle</h1>
         <form onSubmit={createProduct}>
           <h2>Yeni Ürün Ekle</h2>
   

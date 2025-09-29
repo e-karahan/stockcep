@@ -1,51 +1,57 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom'; // useLocation ekledik
 import { supabase } from '../supabaseClient';
 
 export default function HomePage() {
-  const [products, setProducts] = useState([]);
   const navigate = useNavigate();
-  
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(20);
+  const location = useLocation(); // Sayfa state'ini okumak için
 
-  // YENİ: Toplam ürün sayısını ve toplam sayfa sayısını tutmak için state'ler
+  // YENİ: Edit sayfasından geri dönüldüğünde gelen sayfa numarasını al
+  // Eğer bir state gelmediyse veya ilk yüklenişse, 1. sayfadan başla
+  const initialPage = location.state?.fromPage || 1;
+  const [currentPage, setCurrentPage] = useState(initialPage);
+
+  const [products, setProducts] = useState([]);
+  const [itemsPerPage] = useState(20);
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    getProducts();
-  }, [currentPage]);
-
-  async function getProducts() {
+  const getProducts = useCallback(async () => {
     try {
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
 
-      // YENİ: Sorgudan 'count' bilgisini de alıyoruz
-      const { data, error, count } = await supabase
-        .from('urunler')
-        .select('*', { count: 'exact' })
-        .order('stok_miktari', { ascending: true })
-        .range(from, to);
+      let query = supabase.from('urunler').select('*', { count: 'exact' });
+
+      if (searchTerm) {
+        query = query.ilike('urun_adi', `%${searchTerm}%`);
+      }
+
+      query = query.order('created_at', { ascending: false }).range(from, to);
+      const { data, error, count } = await query;
 
       if (error) throw error;
       
-      if (data != null) {
-        setProducts(data);
-      }
-      // YENİ: Gelen 'count' bilgisi ile toplam ürün ve sayfa sayılarını hesaplayıp state'e kaydediyoruz
+      if (data != null) setProducts(data);
       if (count != null) {
         setTotalProducts(count);
         setTotalPages(Math.ceil(count / itemsPerPage));
       }
-
     } catch (error) {
       alert(error.message);
     }
-  }
+  }, [currentPage, searchTerm, itemsPerPage]);
 
-  // ... deleteProduct ve updateStock fonksiyonları aynı kalıyor ...
+  useEffect(() => {
+    getProducts();
+  }, [getProducts]);
+  
+  const handleSearchChange = (e) => {
+    setCurrentPage(1);
+    setSearchTerm(e.target.value);
+  };
+  
   async function deleteProduct(id) {
     if (!window.confirm("Bu ürünü silmek istediğinizden emin misiniz?")) return;
     try {
@@ -71,32 +77,46 @@ export default function HomePage() {
   return (
     <div className="App-header">
       <h1>StokCep</h1>
-      <div className="page-actions"> {/* YENİ: Butonu bir div içine aldık */}
+      <div className="page-actions">
         <Link to="/ekle" className="button-link">Yeni Ürün Ekle</Link>
       </div>
       
-      <h2>Ürün Listesi ({totalProducts} ürün)</h2> {/* Bu başlık zaten vardı, yerinde kalıyor */}
+      <div className="search-container">
+        <input 
+          type="text"
+          placeholder="Ürün adıyla ara..."
+          className="search-input"
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
+      </div>
+      
+      <h2>Ürün Listesi ({totalProducts} ürün)</h2>
       <div className="table-container">
-        {/* ... tablonun geri kalanı aynı ... */}
         <table>
-            {/* ... table content ... */}
-            <tbody>
+          <thead>
+            <tr>
+              <th>Ürün Adı</th>
+              <th>Cinsi</th>
+              <th>Stok</th>
+              <th>Geliş Fiyatı</th>
+              <th>Satış Fiyatı</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody>
             {products.map((product) => (
               <tr key={product.id}>
                 <td>{product.urun_adi}</td>
                 <td>{product.cinsi}</td>
                 <td>
-                  <div className="stock-controls">
-                    <button onClick={() => updateStock(product.id, product.stok_miktari - 1)}>-</button>
-                    <span style={{ padding: '0 10px' }}>{product.stok_miktari}</span>
-                    <button onClick={() => updateStock(product.id, product.stok_miktari + 1)}>+</button>
-                  </div>
+                 {product.stok_miktari}
                 </td>
                 <td>{product.gelis_fiyati ? `${product.gelis_fiyati.toFixed(2)} TL` : '-'}</td>
                 <td>{product.satis_fiyati ? `${product.satis_fiyati.toFixed(2)} TL` : '-'}</td>
-                <td>{ (product.gelis_fiyati * product.stok_miktari) ? `${(product.gelis_fiyati * product.stok_miktari).toFixed(2)} TL` : '-' }</td>
                 <td>
-                  <button onClick={() => navigate(`/duzenle/${product.id}`)} className="edit-button">Düzenle</button>
+                  {/* YENİ: Düzenle butonuna basarken o anki sayfa numarasını da gönderiyoruz */}
+                  <button onClick={() => navigate(`/duzenle/${product.id}`, { state: { fromPage: currentPage } })} className="edit-button">Düzenle</button>
                   <button onClick={() => deleteProduct(product.id)}>Sil</button>
                 </td>
               </tr>
@@ -109,9 +129,7 @@ export default function HomePage() {
         <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
           Önceki Sayfa
         </button>
-        {/* YENİ: Toplam sayfa sayısını da gösterelim */}
         <span>Sayfa {currentPage} / {totalPages}</span>
-        {/* YENİ: Son sayfadaysak "Sonraki Sayfa" butonunu devre dışı bırakıyoruz */}
         <button onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage >= totalPages}>
           Sonraki Sayfa
         </button>
