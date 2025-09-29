@@ -1,55 +1,56 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom'; // useLocation ekledik
+import { useState, useEffect } from 'react'; // useCallback'i kaldırdık
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const location = useLocation(); // Sayfa state'ini okumak için
+  const location = useLocation();
 
-  // YENİ: Edit sayfasından geri dönüldüğünde gelen sayfa numarasını al
-  // Eğer bir state gelmediyse veya ilk yüklenişse, 1. sayfadan başla
   const initialPage = location.state?.fromPage || 1;
   const [currentPage, setCurrentPage] = useState(initialPage);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [products, setProducts] = useState([]);
   const [itemsPerPage] = useState(20);
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
 
-  const getProducts = useCallback(async () => {
-    try {
-      const from = (currentPage - 1) * itemsPerPage;
-      const to = from + itemsPerPage - 1;
-
-      let query = supabase.from('urunler').select('*', { count: 'exact' });
-
-      if (searchTerm) {
-        query = query.ilike('urun_adi', `%${searchTerm}%`);
-      }
-
-      query = query.order('created_at', { ascending: false }).range(from, to);
-      const { data, error, count } = await query;
-
-      if (error) throw error;
-      
-      if (data != null) setProducts(data);
-      if (count != null) {
-        setTotalProducts(count);
-        setTotalPages(Math.ceil(count / itemsPerPage));
-      }
-    } catch (error) {
-      alert(error.message);
-    }
-  }, [currentPage, searchTerm, itemsPerPage]);
-
+  // YENİ: Tek ve birleştirilmiş useEffect
   useEffect(() => {
-    getProducts();
-  }, [getProducts]);
-  
+    // Bu fonksiyon her sayfa veya arama terimi değiştiğinde çalışacak
+    async function getProducts() {
+      try {
+        const from = (currentPage - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+
+        let query = supabase.from('urunler').select('*', { count: 'exact' });
+
+        if (searchTerm) {
+          query = query.ilike('urun_adi', `%${searchTerm}%`);
+        }
+
+        query = query.order('created_at', { ascending: false }).range(from, to);
+        const { data, error, count } = await query;
+
+        if (error) throw error;
+        
+        if (data != null) setProducts(data);
+        if (count != null) {
+          setTotalProducts(count);
+          setTotalPages(Math.ceil(count / itemsPerPage));
+        }
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+    
+    getProducts(); // Fonksiyonu çalıştır
+    
+  }, [currentPage, searchTerm, itemsPerPage]); // Artık sadece bu iki state'e bağlı
+
   const handleSearchChange = (e) => {
-    setCurrentPage(1);
     setSearchTerm(e.target.value);
+    setCurrentPage(1); // Arama yapıldığında her zaman 1. sayfaya dön
   };
   
   async function deleteProduct(id) {
@@ -57,18 +58,13 @@ export default function HomePage() {
     try {
       const { error } = await supabase.from('urunler').delete().eq('id', id);
       if (error) throw error;
-      getProducts();
-    } catch (error) {
-      alert(error.message);
-    }
-  }
-
-  async function updateStock(id, newStockAmount) {
-    if (newStockAmount < 0) return;
-    try {
-      const { error } = await supabase.from('urunler').update({ stok_miktari: newStockAmount }).eq('id', id);
-      if (error) throw error;
-      setProducts(products.map(p => p.id === id ? {...p, stok_miktari: newStockAmount} : p));
+      // getProducts() fonksiyonunu doğrudan çağırmak yerine,
+      // currentPage state'ini değiştirerek useEffect'in yeniden tetiklenmesini bekleyebiliriz.
+      // Ama şimdilik direkt çağırmak daha basit ve anlaşılır.
+      // Eğer arama aktifse ve son elemanı silersek boş sayfa göstermemesi için sayfa numarasını kontrol etmemiz gerekebilir.
+      // Şimdilik basit tutalım.
+      setCurrentPage(1); // Silme sonrası 1. sayfaya dönmek en güvenli davranış
+      setSearchTerm(''); // ve aramayı temizle
     } catch (error) {
       alert(error.message);
     }
@@ -109,13 +105,10 @@ export default function HomePage() {
               <tr key={product.id}>
                 <td>{product.urun_adi}</td>
                 <td>{product.cinsi}</td>
-                <td>
-                 {product.stok_miktari}
-                </td>
+                <td>{product.stok_miktari}</td>
                 <td>{product.gelis_fiyati ? `${product.gelis_fiyati.toFixed(2)} TL` : '-'}</td>
                 <td>{product.satis_fiyati ? `${product.satis_fiyati.toFixed(2)} TL` : '-'}</td>
                 <td>
-                  {/* YENİ: Düzenle butonuna basarken o anki sayfa numarasını da gönderiyoruz */}
                   <button onClick={() => navigate(`/duzenle/${product.id}`, { state: { fromPage: currentPage } })} className="edit-button">Düzenle</button>
                   <button onClick={() => deleteProduct(product.id)}>Sil</button>
                 </td>
