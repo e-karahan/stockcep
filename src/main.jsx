@@ -6,6 +6,7 @@ import './index.css'
 // Sayfalarımızı import ediyoruz
 import HomePage from './pages/HomePage';
 import AddProductPage from './pages/AddProductPage';
+import EditProductPage from './pages/EditProductPage';
 
 // Rotaları (yolları) tanımlıyoruz
 const router = createBrowserRouter([
@@ -16,6 +17,10 @@ const router = createBrowserRouter([
   {
     path: "/ekle", // http://localhost:5173/ekle URL'i
     element: <AddProductPage />, // Bu URL'de AddProductPage bileşenini göster
+  },
+  { // YENİ: Düzenleme rotası
+    path: "/duzenle/:productId", // :productId dinamik bir parametre
+    element: <EditProductPage />,
   },
 ]);
 

@@ -1,113 +1,270 @@
-/* Genel Sayfa Ayarları ve Reset */
+/* Genel Ayarlar ve Modern Fontlar */
+:root {
+  --primary-color: #61dafb; /* React Mavisi */
+  --secondary-color: #4CAF50; /* Yeşil */
+  --danger-color: #f44336; /* Kırmızı */
+  --background-color: #20232a;
+  --card-background: #282c34;
+  --text-color: #ffffff;
+  --border-color: #444b59;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #282c34;
-  color: white;
-  padding: 20px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  padding: 1rem;
 }
 
 /* Ana Konteyner */
 .App-header {
+  max-width: 1200px; /* Tablo için daha geniş alan */
+  margin: 20px auto;
+  padding: 20px;
   text-align: center;
-  max-width: 900px;
-  margin: 0 auto;
 }
 
-/* Tablo Stilleri */
-table {
-  width: 100%;
-  margin-top: 20px;
-  border-collapse: collapse;
+h1, h2 {
+  color: var(--primary-color);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 2rem 0;
+}
+
+/* Form Stilleri */
+form {
+  display: grid; /* Daha esnek bir yapi */
+  grid-template-columns: 1fr 1fr; /* Formu iki sutuna ayir */
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background-color: var(--card-background);
+  border-radius: 8px;
   text-align: left;
 }
 
-th, td {
-  padding: 12px 15px;
-  border-bottom: 1px solid #444;
-}
-
-th {
-  background-color: #3c414d;
-}
-
-/* Form Elemanları */
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 30px;
-  padding: 20px;
-  background-color: #3c414d;
-  border-radius: 8px;
+form h1, form h2 {
+  grid-column: 1 / -1; /* Başlık iki sütunu da kapsasın */
+  text-align: center;
+  margin-top: 0;
 }
 
 input[type="text"], input[type="number"] {
-  padding: 10px;
+  width: 100%;
+  padding: 12px;
   border-radius: 5px;
-  border: 1px solid #555;
-  background-color: #282c34;
-  color: white;
+  border: 1px solid var(--border-color);
+  background-color: var(--background-color);
+  color: var(--text-color);
   font-size: 1rem;
+  box-sizing: border-box;
 }
 
 /* Buton Stilleri */
-button {
-  padding: 10px 15px;
+button, .button-link {
+  padding: 12px 20px;
   border-radius: 5px;
   border: none;
   cursor: pointer;
   font-weight: bold;
-  background-color: #61dafb;
-  color: #282c34;
-  transition: background-color 0.2s;
-}
-
-button:hover {
-  background-color: #88eaff;
-}
-
-/* Form Gönderme Butonu */
-form button[type="submit"] {
-  background-color: #4CAF50; /* Yeşil */
-  color: white;
-}
-
-form button[type="submit"]:hover {
-  background-color: #5cb85c;
-}
-
-/* Silme Butonu */
-td button:last-child {
-  background-color: #f44336; /* Kırmızı */
-  color: white;
-}
-td button:last-child:hover {
-  background-color: #da190b;
-}
-
-/* Stok Artırma/Azaltma Butonları */
-td button {
-  margin: 0 5px;
-}
-
-/* Link Stilleri */
-.button-link {
-  display: inline-block;
-  padding: 10px 20px;
-  margin-bottom: 20px;
-  background-color: #61dafb;
-  color: #282c34;
   text-decoration: none;
-  border-radius: 5px;
-  font-weight: bold;
-  transition: background-color 0.2s;
+  display: inline-block;
+  text-align: center;
+  transition: all 0.3s ease;
 }
 
+.button-link {
+  background-color: var(--primary-color);
+  color: var(--background-color);
+}
 .button-link:hover {
-  background-color: #88eaff;
+  background-color: var(--text-color);
+}
+
+form button[type="submit"] {
+  grid-column: 1 / -1; /* Buton iki sütunu da kapsasın */
+  background-color: var(--secondary-color);
+  color: white;
+}
+form button[type="submit"]:hover {
+  opacity: 0.9;
+}
+
+/* --- TABLO STİLLERİ VE MOBİL UYUMLULUK --- */
+.table-container {
+  overflow-x: auto; /* En önemlisi: Tablo ekrana sığmazsa yatayda scroll olsun */
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  background-color: var(--card-background);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+th {
+  background-color: #323640;
+}
+
+td {
+  vertical-align: middle;
+}
+
+/* İşlem Butonları */
+td button {
+  font-size: 0.8rem;
+  padding: 8px 12px;
+  margin: 0 4px;
+}
+
+td button:first-of-type { /* Silme Butonu */
+  background-color: var(--danger-color);
+  color: white;
+}
+td button:first-of-type:hover {
+  opacity: 0.8;
+}
+
+.stock-controls button {
+  background-color: var(--primary-color);
+  color: var(--background-color);
+}
+
+
+/* --- MOBİL İÇİN ÖZEL KURALLAR (MEDIA QUERIES) --- */
+@media (max-width: 768px) {
+  body {
+    padding: 0.5rem;
+  }
+  .App-header {
+    padding: 10px;
+  }
+  form {
+    grid-template-columns: 1fr; /* Mobil'de formu tek sütuna indir */
+  }
+  
+  /* Mobil'de tabloyu daha okunaklı yapmak için kart görünümüne çevirme tekniği */
+  table, thead, tbody, th, td, tr { 
+		display: block; 
+	}
+
+  thead tr {
+    position: absolute;
+		top: -9999px;
+		left: -9999px;
+  }
+
+  tr {
+    border: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+    border-radius: 8px;
+  }
+
+  td {
+    border: none;
+		border-bottom: 1px solid #3c414d; 
+		position: relative;
+		padding-left: 50%; 
+    text-align: right;
+  }
+
+  td:before {
+    position: absolute;
+		top: 1rem;
+		left: 1rem;
+		width: 45%; 
+		padding-right: 10px; 
+		white-space: nowrap;
+    text-align: left;
+    font-weight: bold;
+    color: var(--primary-color);
+  }
+
+  /* Her bir hücreye kendi başlığını ekliyoruz */
+  td:nth-of-type(1):before { content: "Ürün Adı:"; }
+  td:nth-of-type(2):before { content: "Cinsi:"; }
+  td:nth-of-type(3):before { content: "Stok:"; }
+  td:nth-of-type(4):before { content: "Geliş Fiyatı:"; }
+  td:nth-of-type(5):before { content: "Satış Fiyatı:"; }
+  td:nth-of-type(6):before { content: "Toplam Maliyet:"; }
+  td:nth-of-type(7):before { content: "İşlemler:"; }
+
+  .stock-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+}
+
+/* index.css'in en altına ekle */
+
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.edit-button {
+  background-color: #ffc107; /* Sarı */
+  color: #20232a;
+}
+/* index.css'in en altına ekle */
+
+.form-field {
+  position: relative; /* Etiketi pozisyonlamak için gerekli */
+  margin-bottom: 0.5rem;
+}
+
+.form-field label {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  transform: translateY(-50%);
+  background-color: var(--background-color);
+  color: #aaa;
+  padding: 0 0.25rem;
+  margin: 0 0.5rem;
+  transition: all 0.2s ease-in-out;
+  pointer-events: none; /* Etiketin tıklamaları engellememesi için */
+}
+
+/* Bu seçici en önemli kısım: 
+Input'a odaklanıldığında VEYA içinde placeholder gösterilmediğinde (yani dolu olduğunda)
+hemen yanındaki label'ı hareket ettir.
+*/
+.form-field input:focus + label,
+.form-field input:not(:placeholder-shown) + label {
+  top: 0;
+  left: 0.8rem;
+  font-size: 0.8rem;
+  color: var(--primary-color);
+}
+
+.page-actions {
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+h1 {
+  margin-bottom: 0;
 }
