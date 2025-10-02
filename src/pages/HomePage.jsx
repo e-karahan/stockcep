@@ -11,30 +11,24 @@ export default function HomePage() {
   const initialPage = location.state?.fromPage || 1;
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [searchTerm, setSearchTerm] = useState('');
-
   const [products, setProducts] = useState([]);
   const [itemsPerPage] = useState(20);
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
+  const [expandedProductId, setExpandedProductId] = useState(null);
 
   const getProducts = useCallback(async () => {
     try {
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
-
       let query = supabase.from('urunler').select('*', { count: 'exact' });
-
       if (searchTerm) {
         query = query.ilike('urun_adi', `%${searchTerm}%`);
       }
-
       query = query.order('id', { ascending: true }).range(from, to);
-      
       const { data, error, count } = await query;
-
       if (error) throw error;
-      
       if (data != null) setProducts(data);
       if (count != null) {
         setTotalProducts(count);
@@ -65,12 +59,6 @@ export default function HomePage() {
     }
   }
 
-// HomePage.jsx içinde SADECE handleExportExcel fonksiyonunu değiştiriyoruz
-
-  // HomePage.jsx içinde SADECE handleExportExcel fonksiyonunu değiştiriyoruz
-
-// HomePage.jsx içinde SADECE handleExportExcel fonksiyonunu değiştiriyoruz
-
   const handleExportExcel = async () => {
     setIsExporting(true);
     try {
@@ -78,14 +66,9 @@ export default function HomePage() {
         .from('urunler')
         .select('urun_adi, cinsi, stok_miktari, gelis_fiyati, satis_fiyati, aciklama')
         .order('id', { ascending: true });
-
       if (error) throw error;
-
-      // 1. Yeni bir Excel çalışma kitabı oluştur
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Stok Listesi');
-
-      // 2. Sütun başlıklarını ve genişliklerini tanımla
       worksheet.columns = [
         { header: 'Ürün Adı', key: 'urun_adi', width: 40 },
         { header: 'Cinsi', key: 'cinsi', width: 25 },
@@ -94,38 +77,26 @@ export default function HomePage() {
         { header: 'Satış Fiyatı', key: 'satis_fiyati', width: 15, style: { numFmt: '#,##0.00 TL' } },
         { header: 'Açıklama', key: 'aciklama', width: 50 }
       ];
-
-      // 3. Başlık satırını stilize et
       const headerRow = worksheet.getRow(1);
       headerRow.eachCell((cell) => {
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FF4CAF50' }, // Yeşil arka plan
-        };
-        cell.font = {
-          color: { argb: 'FFFFFFFF' }, // Beyaz yazı
-          bold: true,
-        };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4CAF50' } };
+        cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
         cell.alignment = { vertical: 'middle', horizontal: 'center' };
       });
-
-      // 4. Veriyi satır satır ekle
       allProducts.forEach(product => {
         worksheet.addRow(product);
       });
-
-      // 5. Dosyayı oluştur (buffer'a yaz)
       const buffer = await workbook.xlsx.writeBuffer();
-
-      // 6. Dosyayı indir
       saveAs(new Blob([buffer]), 'Stok Raporu.xlsx');
-
     } catch (error) {
       alert("Veri aktarılırken bir hata oluştu: " + error.message);
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const toggleExpand = (productId) => {
+    setExpandedProductId(prevId => (prevId === productId ? null : productId));
   };
 
   return (
@@ -149,7 +120,8 @@ export default function HomePage() {
       </div>
       
       <h2>Ürün Listesi ({totalProducts} ürün)</h2>
-      <div className="table-container">
+
+      <div className="table-container desktop-only">
         <table>
           <thead>
             <tr>
@@ -171,22 +143,41 @@ export default function HomePage() {
                 <td>{product.satis_fiyati ? `${product.satis_fiyati.toFixed(2)} TL` : '-'}</td>
                 <td>
                   <button onClick={() => navigate(`/duzenle/${product.id}`, { state: { fromPage: currentPage } })} className="edit-button">Düzenle</button>
-                  <button onClick={() => deleteProduct(product.id)}>Sil</button>
+                  <button onClick={() => deleteProduct(product.id)} className="delete-button">Sil</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      
+
+      <div className="mobile-list-container mobile-only">
+        {products.map(product => (
+          <div key={product.id} className={`mobile-card ${expandedProductId === product.id ? 'expanded' : ''}`}>
+            <div className="card-header" onClick={() => toggleExpand(product.id)}>
+              <span className="product-name">{product.urun_adi}</span>
+              <div className="header-details">
+                <span className="stock-info">Stok: {product.stok_miktari}</span>
+                <span className="arrow">▼</span>
+              </div>
+            </div>
+            <div className="card-details">
+              <div className="detail-item"><strong>Cinsi:</strong> <span>{product.cinsi || '-'}</span></div>
+              <div className="detail-item"><strong>Geliş Fiyatı:</strong> <span>{product.gelis_fiyati ? `${product.gelis_fiyati.toFixed(2)} TL` : '-'}</span></div>
+              <div className="detail-item"><strong>Satış Fiyatı:</strong> <span>{product.satis_fiyati ? `${product.satis_fiyati.toFixed(2)} TL` : '-'}</span></div>
+              <div className="card-actions">
+                <button onClick={() => navigate(`/duzenle/${product.id}`, { state: { fromPage: currentPage } })} className="edit-button">Düzenle</button>
+                <button onClick={() => deleteProduct(product.id)} className="delete-button">Sil</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div className="pagination-controls">
-        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
-          Önceki Sayfa
-        </button>
+        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>Önceki</button>
         <span>Sayfa {currentPage} / {totalPages}</span>
-        <button onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage >= totalPages}>
-          Sonraki Sayfa
-        </button>
+        <button onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage >= totalPages}>Sonraki</button>
       </div>
     </div>
   );
